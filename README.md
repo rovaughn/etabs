@@ -51,5 +51,7 @@ TODO
 
 - Tests
 - Benchmarks.  There are some potential efficiency gains although I don't know
-  if they'd be noticeable.
+  if they'd be noticeable.  Mostly in the way the file is written out (could
+  be done with a single syscall).
+- If nothing changed, don't overwrite the file.
 
