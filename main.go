@@ -112,8 +112,19 @@ func FixTabstops(r io.Reader, w io.Writer) error {
 }
 
 func main() {
-	if len(os.Args) == 2 {
-		filename := os.Args[1]
+	if len(os.Args) != 2 {
+		fmt.Fprintln(os.Stderr, "Usage: etabs [FILE]")
+		fmt.Fprintln(os.Stderr, "    or etabs - to use stdin/stdout")
+		return
+	}
+
+	filename := os.Args[1]
+
+	if filename == "-" {
+		if err := FixTabstops(os.Stdin, os.Stdout); err != nil {
+			panic(err)
+		}
+	} else {
 		infile, err := os.Open(filename)
 		if err != nil {
 			panic(err)
@@ -134,11 +145,5 @@ func main() {
 		if err := os.Rename(outfile.Name(), filename); err != nil {
 			panic(err)
 		}
-	} else if len(os.Args) == 1 {
-		if err := FixTabstops(os.Stdin, os.Stdout); err != nil {
-			panic(err)
-		}
-	} else {
-		fmt.Fprintln(os.Stderr, "Usage: etabs [FILE]")
 	}
 }
