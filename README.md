@@ -1,15 +1,15 @@
 etabs
 =====
 
-Simple elastic tabs formatter.  A one-size-fits-all syntax formatter.
+Simple [elastic tabs](http://nickgravgaard.com/elastic-tabstops/) formatter.  A
+one-size-fits-all syntax formatter.
 
-	etabs FILE
-	cat file | etabs - | less
+	etabs file.c
+	cat file.c | etabs - | less
 
-It takes in a file and automatically aligns the elastic tabs.  Leading
-whitespace is completely ignored.  I'm still unsure what the best way is to
-mark an elastic tab in a file.  Currently an elastic tab is considered any TAB
-character or two or more spaces except for leading whitespace.
+etabs takes in a file and automatically aligns the elastic tabs.  An elastic
+tabstop is, excluding leading whitespace, any sequence of whitespace that isn't
+just a single space.
 
 As an example, let's say the following is `file.c`.
 
@@ -44,7 +44,7 @@ otherwise it might interpret the `D` in `struct D` or the `char` in `const char`
 as needing to be aligned with the variable names.  Also the only time multiple
 spaces are generally used is specifically when aligning something.  TAB
 characters that aren't leading whitespace are also elastic tabs, allowing you to
-just hit TAB to insert an elastic tab into a file regardless of 
+just hit TAB to insert an elastic tab without worrying about alignment.
 
 The upside is it doesn't really require any editor support or weird unicode
 characters to implement elastic tabstops in a way that works with any language.
@@ -82,7 +82,6 @@ path or move the binary somewhere visible on your path.
 TODO
 ----
 
-- Tests
 - Benchmarks.  There are some potential efficiency gains although I don't know
   if they'd be noticeable.  Mostly in the way the file is written out (could
   be done with a single syscall).

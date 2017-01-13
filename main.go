@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var splitter = regexp.MustCompile(`(\t|\30|\s\s)\s*`)
+var elasticTabstop = regexp.MustCompile(`( [[:space:]]|[\t\v\f\r])[[:space:]]*`)
 
 type Cell struct {
 	text     string
@@ -53,7 +53,7 @@ func FixTabstops(r io.Reader, w io.Writer) error {
 
 		trimmedLine := strings.TrimSpace(line)
 		indent := line[0:strings.Index(line, trimmedLine)]
-		pieces := splitter.Split(trimmedLine, -1)
+		pieces := elasticTabstop.Split(trimmedLine, -1)
 		pieces[0] = indent + pieces[0]
 
 		if len(pieces) > maxCols {
