@@ -69,12 +69,11 @@ building
 Building this program depends on [Go](https://golang.org/doc/install) being
 installed.  After it is installed the following can build it:
 
-	export GOPATH=~/go/src
+	export GOPATH=~/go
 	mkdir -p ~/go/src
 	cd ~/go/src
 	git clone https://github.com/rovaughn/etabs
-	cd etabs
-	go install
+	go install etabs
 
 This will put etabs at go/bin/etabs, so then you can just add go/bin to your
 path or move the binary somewhere visible on your path.
