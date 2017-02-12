@@ -16,7 +16,6 @@ struct X {
     struct D     x;  // field 1
     const char*    y;   // field 2
     char*    z;            // field 3
-};
 `
 
 var expectedFile = `
@@ -30,7 +29,6 @@ struct X {
     struct D     x;  // field 1
     const char*  y;  // field 2
     char*        z;  // field 3
-};
 `
 
 func TestFixTabstops(t *testing.T) {
@@ -41,6 +39,6 @@ func TestFixTabstops(t *testing.T) {
 	}
 
 	if !bytes.Equal(out.Bytes(), []byte(expectedFile)) {
-		t.Errorf("expected\n%q\ngot\n %q", expectedFile, string(out.Bytes()))
+		t.Errorf("expected\n%s\ngot\n %s", expectedFile, string(out.Bytes()))
 	}
 }

@@ -39,18 +39,12 @@ func (rows Rows) FixWidth(cols int, newWidth int) {
 }
 
 func FixTabstops(r io.Reader, w io.Writer) error {
-	br := bufio.NewReader(r)
+	scanner := bufio.NewScanner(r)
 	maxCols := 0
 	table := make(Rows, 0)
 
-	for {
-		line, err := br.ReadString('\n')
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
+	for scanner.Scan() {
+		line := scanner.Text()
 		trimmedLine := strings.TrimSpace(line)
 		indent := line[0:strings.Index(line, trimmedLine)]
 		pieces := elasticTabstop.Split(trimmedLine, -1)
@@ -72,6 +66,12 @@ func FixTabstops(r io.Reader, w io.Writer) error {
 		table = append(table, row)
 	}
 
+	table = append(table, nil)
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
 	for cols := 1; cols <= maxCols; cols++ {
 		blockStart := 0
 		tabstop := 0
@@ -91,7 +91,7 @@ func FixTabstops(r io.Reader, w io.Writer) error {
 		}
 	}
 
-	for _, row := range table {
+	for _, row := range table[:len(table)-1] {
 		for col, cell := range row {
 			if _, err := w.Write([]byte(cell.text)); err != nil {
 				return err
