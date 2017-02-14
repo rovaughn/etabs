@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,95 +11,115 @@ import (
 	"strings"
 )
 
-var elasticTabstop = regexp.MustCompile(`( [[:space:]]|[\t\v\f\r])[[:space:]]*`)
+var columnRe = regexp.MustCompile(`((^[ \t]*)?([^ \t].*?))(( [\t ]|\t)[ \t]*|$)`)
 
-type Cell struct {
+type Column struct {
 	text     string
 	trailing int
 }
 
-type Row []Cell
-type Rows []Row
-
-func (c Cell) Width() int {
-	return len(c.text) + c.trailing
-}
-
-func (r Row) Width() int {
+func MeasureWidth(cols []Column) int {
 	total := 0
-	for _, cell := range r {
-		total += cell.Width()
+	for i, col := range cols {
+		total += len(col.text)
+		if i < len(cols)-1 {
+			total += col.trailing
+		}
 	}
 	return total
 }
 
-func (rows Rows) FixWidth(cols int, newWidth int) {
-	for row := range rows {
-		rows[row][cols-1].trailing += newWidth - rows[row][0:cols].Width()
+var Unchanged = errors.New("No changes made")
+
+func FindBlocks(rows [][]Column, numCols int) [][][]Column {
+	blockStart := 0
+	blockEnd := 0
+	blocks := make([][][]Column, 0)
+
+	for row := 0; row <= len(rows); row++ {
+		if row < len(rows) && len(rows[row]) >= numCols {
+			blockEnd = row + 1
+		} else {
+			if blockEnd > blockStart {
+				blocks = append(blocks, rows[blockStart:blockEnd])
+			}
+
+			blockStart = row + 1
+			blockEnd = row + 1
+		}
 	}
+
+	return blocks
 }
 
+// This function works by converting the text into a "tabular" format, where
+// the text is multiple rows, each containing multiple columns.  A given cell
+// stores its text and its trailing length.
 func FixTabstops(r io.Reader, w io.Writer) error {
 	scanner := bufio.NewScanner(r)
 	maxCols := 0
-	table := make(Rows, 0)
+	table := make([][]Column, 0)
 
+	changed := false
 	for scanner.Scan() {
 		line := scanner.Text()
-		trimmedLine := strings.TrimSpace(line)
-		indent := line[0:strings.Index(line, trimmedLine)]
-		pieces := elasticTabstop.Split(trimmedLine, -1)
-		pieces[0] = indent + pieces[0]
+		columns := columnRe.FindAllStringSubmatch(line, -1)
 
-		if len(pieces) > maxCols {
-			maxCols = len(pieces)
+		row := make([]Column, len(columns))
+		for i, col := range columns {
+			row[i].text = col[1]
+
+			if strings.Contains(col[4], "\t") {
+				changed = true
+				row[i].trailing = 0
+			} else {
+				row[i].trailing = len(col[4])
+			}
 		}
 
-		row := make([]Cell, 0, len(pieces))
-
-		for _, piece := range pieces {
-			row = append(row, Cell{
-				text:     piece,
-				trailing: 0,
-			})
+		if len(columns) > maxCols {
+			maxCols = len(columns)
 		}
 
 		table = append(table, row)
 	}
 
-	table = append(table, nil)
-
 	if err := scanner.Err(); err != nil {
 		return err
 	}
 
-	for cols := 1; cols <= maxCols; cols++ {
-		blockStart := 0
-		tabstop := 0
+	for alignCol := 1; alignCol < maxCols; alignCol++ {
+		for _, block := range FindBlocks(table, alignCol+1) {
+			widest := 0
+			for _, row := range block {
+				width := MeasureWidth(row[:alignCol])
 
-		for row := 0; row < len(table); row++ {
-			if cols > len(table[row])-1 {
-				table[blockStart:row].FixWidth(cols, tabstop)
-				blockStart = row + 1
-				tabstop = 0
-			} else {
-				width := table[row][0:cols].Width()
-
-				if width > tabstop {
-					tabstop = width
+				if width > widest {
+					widest = width
 				}
+			}
+
+			for _, row := range block {
+				width := MeasureWidth(row[:alignCol]) + row[alignCol-1].trailing
+				delta := widest + 2 - width
+				changed = changed || delta != 0
+				row[alignCol-1].trailing += delta
 			}
 		}
 	}
 
-	for _, row := range table[:len(table)-1] {
+	if !changed {
+		return Unchanged
+	}
+
+	for _, row := range table {
 		for col, cell := range row {
 			if _, err := w.Write([]byte(cell.text)); err != nil {
 				return err
 			}
 
 			if col < len(row)-1 {
-				if _, err := w.Write([]byte(strings.Repeat(" ", 2+cell.trailing))); err != nil {
+				if _, err := w.Write([]byte(strings.Repeat(" ", cell.trailing))); err != nil {
 					return err
 				}
 			}
@@ -138,7 +159,9 @@ func main() {
 		defer outfile.Close()
 		defer os.Remove(outfile.Name())
 
-		if err := FixTabstops(infile, outfile); err != nil {
+		if err := FixTabstops(infile, outfile); err == Unchanged {
+			return
+		} else if err != nil {
 			panic(err)
 		}
 
