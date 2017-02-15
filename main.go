@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -112,21 +113,26 @@ func FixTabstops(r io.Reader, w io.Writer) error {
 		return Unchanged
 	}
 
+	bw := bufio.NewWriter(w)
 	for _, row := range table {
 		for col, cell := range row {
-			if _, err := w.Write([]byte(cell.text)); err != nil {
+			if _, err := bw.WriteString(cell.text); err != nil {
 				return err
 			}
 
 			if col < len(row)-1 {
-				if _, err := w.Write([]byte(strings.Repeat(" ", cell.trailing))); err != nil {
+				if _, err := bw.Write(bytes.Repeat([]byte(" "), cell.trailing)); err != nil {
 					return err
 				}
 			}
 		}
-		if _, err := w.Write([]byte("\n")); err != nil {
+		if err := bw.WriteByte('\n'); err != nil {
 			return err
 		}
+	}
+
+	if err := bw.Flush(); err != nil {
+		return err
 	}
 
 	return nil

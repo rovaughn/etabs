@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
-	//"os"
+	"os"
 	"strings"
 	"testing"
 )
