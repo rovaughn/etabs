@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io/ioutil"
+	//"os"
 	"strings"
 	"testing"
 )
@@ -37,9 +38,14 @@ func listSpaces(s string) string {
 	return strings.Replace(strings.Replace(s, "\t", "▸▸▸▸", -1), " ", "·", -1)
 }
 
-func BenchmarkFixTabstops(b *testing.B) {
+func BenchmarkFixTabstopsWritten(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		FixTabstops(bytes.NewReader(inputFile), ioutil.Discard)
+		target, err := os.Create(os.DevNull)
+		if err != nil {
+			panic(err)
+		}
+		FixTabstops(bytes.NewReader(inputFile), target)
+		target.Close()
 	}
 }
 

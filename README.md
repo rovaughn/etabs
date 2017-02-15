@@ -82,11 +82,9 @@ path or move the binary somewhere visible on your path.
 TODO
 ----
 
-- Benchmarks.  There are some potential efficiency gains although I don't know
-  if they'd be noticeable.  Mostly in the way the file is written out (could
-  be done with a single syscall).
-- If nothing changed, don't overwrite the file.
+- Possibly more efficiency gains.
 - Maybe more checking for alignment issues.  E.g. trailing spaces, or when using
   spaces to indent, using an inconsistent multiple of spaces, or mixing
   tabs/spaces.  Also it could convert all indentation to a given format.
+  Probably more suitable to the language-specific formatters though.
 
