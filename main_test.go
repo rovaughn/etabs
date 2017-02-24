@@ -18,7 +18,7 @@ struct A {
 struct X {
     struct D     x;  // field 1
     const char*    y;   // field 2
-    char*    z;            // field 3
+    char*    µ;            // field 3
 `)
 
 var expectedFile = []byte(`
@@ -31,7 +31,7 @@ struct A {
 struct X {
     struct D     x;  // field 1
     const char*  y;  // field 2
-    char*        z;  // field 3
+    char*        µ;  // field 3
 `)
 
 func listSpaces(s string) string {

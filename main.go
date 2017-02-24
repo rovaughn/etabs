@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 var columnRe = regexp.MustCompile(`((^[ \t]*)?([^ \t].*?))(( [\t ]|\t)[ \t]*|$)`)
@@ -22,7 +23,7 @@ type Column struct {
 func MeasureWidth(cols []Column) int {
 	total := 0
 	for i, col := range cols {
-		total += len(col.text)
+		total += utf8.RuneCountInString(col.text)
 		if i < len(cols)-1 {
 			total += col.trailing
 		}
